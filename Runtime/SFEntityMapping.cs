@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Leopotam.EcsLite;
 using SFramework.Core.Runtime;
 using UnityEngine;
@@ -32,6 +33,18 @@ namespace SFramework.ECS.Runtime
             {
                 _packedEntities.Remove(instanceId);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int FastGetEntity(GameObject gameObject)
+        {
+            return _packedEntities[gameObject.GetInstanceID()].Id;
+        } 
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void FastGetEntityPacked(GameObject gameObject, out EcsPackedEntityWithWorld entity)
+        {
+            entity = _packedEntities[gameObject.GetInstanceID()];
         }
 
         public static bool GetEntity(GameObject gameObject, out EcsWorld world, out int entity)
