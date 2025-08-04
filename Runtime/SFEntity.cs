@@ -11,12 +11,11 @@ namespace SFramework.ECS.Runtime
     {
         public ref EcsPackedEntityWithWorld EcsPackedEntity => ref _ecsPackedEntity;
 
-        [SFInject]
-        private readonly ISFWorldsService _worldsService;
+        [SFInject] private readonly ISFWorldsService _worldsService;
 
-        [SFWorld]
-        [SerializeField]
-        private string _world;
+        [SFWorld] [SerializeField] private string _world;
+
+        public bool removeEntityOnDisable;
 
         private EcsPackedEntityWithWorld _ecsPackedEntity;
         private bool _injected;
@@ -27,6 +26,7 @@ namespace SFramework.ECS.Runtime
         private EcsWorld _ecsWorld;
 
         private bool _isRootEntity;
+        private bool _initialized;
 
         protected override void Init()
         {
@@ -42,6 +42,8 @@ namespace SFramework.ECS.Runtime
 
         public void OnEnable()
         {
+            if (_initialized) return;
+
             var entity = _ecsWorld.NewEntity();
             _ecsPackedEntity = _ecsWorld.PackEntityWithWorld(entity);
 
@@ -51,7 +53,7 @@ namespace SFramework.ECS.Runtime
             {
                 value = gameObject
             };
-            
+
             if (_isRootEntity)
             {
                 _rootEntityPool.Add(entity) = new RootEntity();
@@ -66,16 +68,22 @@ namespace SFramework.ECS.Runtime
             {
                 entitySetup.Setup(ref _ecsPackedEntity);
             }
+
+            _initialized = true;
         }
 
         public void OnDisable()
         {
+            if (removeEntityOnDisable == false) return;
+
             SFEntityMapping.RemoveMapping(gameObject);
 
             if (_ecsPackedEntity.Unpack(out var world, out var entity))
             {
                 world.DelEntity(entity);
             }
+
+            _initialized = false;
         }
     }
 }
