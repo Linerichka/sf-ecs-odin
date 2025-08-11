@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using Leopotam.EcsLite;
 using SFramework.Core.Runtime;
 using Sirenix.OdinInspector;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace SFramework.ECS.Runtime
@@ -14,13 +17,14 @@ namespace SFramework.ECS.Runtime
         public ref EcsPackedEntityWithWorld EcsPackedEntity => ref _ecsPackedEntity;
 
         [SFInject] private readonly ISFWorldsService _worldsService;
-
-        [SFWorld] [SerializeField] private string _world;
+        [SFWorld]
+        private string _world;
 
         public bool removeEntityOnDisable;
 
         private EcsPackedEntityWithWorld _ecsPackedEntity;
         private bool _injected;
+
         private ISFEntitySetup[] _components;
         private EcsPool<GameObjectRef> _gameObjectRefPool;
         private EcsPool<TransformRef> _transformRefPool;
@@ -38,8 +42,10 @@ namespace SFramework.ECS.Runtime
         {
             if (_injected) return;
             _components = GetComponents<ISFEntitySetup>();
+            _isRootEntity = transform.parent == null || transform.parent.GetComponentInParent<SFEntity>(true) == null;
             _injected = true;
             _ecsWorld = _worldsService.GetWorld(_world);
+            
             _gameObjectRefPool = _ecsWorld.GetPool<GameObjectRef>();
             _transformRefPool = _ecsWorld.GetPool<TransformRef>();
             _rootEntityPool = _ecsWorld.GetPool<RootEntity>();
@@ -50,7 +56,17 @@ namespace SFramework.ECS.Runtime
             }
         }
 
-        private void OnEnable()
+        
+        #if UNITY_EDITOR
+        [Button(ButtonSizes.Medium), EnableIf("@UnityEngine.Application.isPlaying")]
+        public void ReInit()
+        {
+            OnDisable();
+            OnEnable();
+        }
+        #endif
+        
+        public void OnEnable()
         {
             CreateEntity();
         }
@@ -94,11 +110,11 @@ namespace SFramework.ECS.Runtime
                 value = gameObject
             };
 
-            if (_isRootEntity)
-            {
-                _rootEntityPool.Add(entity) = new RootEntity();
-            }
-
+            if (_isRootEntity) 
+            { 
+                _rootEntityPool.Add(entity) = new RootEntity(); 
+            } 
+ 
             _transformRefPool.Add(entity) = new TransformRef
             {
                 value = transform

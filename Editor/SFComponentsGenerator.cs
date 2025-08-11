@@ -63,7 +63,7 @@ namespace @@NAMESPACE@@
 
                 if (attribute != null)
                 {
-                    if (attribute.CustomBaseType != null)
+                    if (attribute.CustomBaseType != null || typeof(ISFAlineDraw).IsAssignableFrom(type))
                     {
                         template = template.Replace("SFComponent<@@COMPONENTNAME@@>", attribute.CustomBaseType.FullName.Replace("`1", "<@@COMPONENTNAME@@>"));
                     }
