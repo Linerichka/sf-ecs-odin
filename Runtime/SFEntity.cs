@@ -1,4 +1,6 @@
-﻿using Leopotam.EcsLite;
+﻿using System;
+using System.Collections.Generic;
+using Leopotam.EcsLite;
 using SFramework.Core.Runtime;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -25,25 +27,63 @@ namespace SFramework.ECS.Runtime
         private EcsPool<RootEntity> _rootEntityPool;
         private EcsWorld _ecsWorld;
 
-        private bool _isRootEntity;
-        private bool _initialized;
+        [SerializeField] [HideInInspector] private bool _isRootEntity;
+        [SerializeField] [HideInInspector] private bool _checkedRootEntity;
+
+        private IReadOnlyList<SFEntity> _childrenEntities;
+
+        private bool _createdEntity;
 
         protected override void Init()
         {
             if (_injected) return;
             _components = GetComponents<ISFEntitySetup>();
-            _isRootEntity = transform.parent == null || transform.parent.GetComponentInParent<SFEntity>(true) == null;
             _injected = true;
             _ecsWorld = _worldsService.GetWorld(_world);
             _gameObjectRefPool = _ecsWorld.GetPool<GameObjectRef>();
             _transformRefPool = _ecsWorld.GetPool<TransformRef>();
             _rootEntityPool = _ecsWorld.GetPool<RootEntity>();
+
+            if (_checkedRootEntity == false)
+            {
+                OnValidate();
+            }
         }
 
-        public void OnEnable()
+        private void OnEnable()
         {
-            if (_initialized) return;
+            CreateEntity();
+        }
 
+        private void OnDisable()
+        {
+            if (removeEntityOnDisable == false) return;
+            DestroyEntity();
+            _createdEntity = false;
+        }
+
+        private void OnDestroy()
+        {
+            if (_createdEntity == false) return;
+            DestroyEntity();
+        }
+
+        private void OnValidate()
+        {
+            _isRootEntity = transform.parent == null || transform.parent.GetComponentInParent<SFEntity>(true) == null;
+            _checkedRootEntity = true;
+        }
+
+        [Button("Recreate Entity")]
+        public void RecreateEntity()
+        {
+            DestroyEntity();
+            CreateEntity();
+        }
+
+        public void CreateEntity()
+        {
+            if (_createdEntity) return;
             var entity = _ecsWorld.NewEntity();
             _ecsPackedEntity = _ecsWorld.PackEntityWithWorld(entity);
 
@@ -69,21 +109,17 @@ namespace SFramework.ECS.Runtime
                 entitySetup.Setup(ref _ecsPackedEntity);
             }
 
-            _initialized = true;
+            _createdEntity = true;
         }
 
-        public void OnDisable()
+        public void DestroyEntity()
         {
-            if (removeEntityOnDisable == false) return;
-
             SFEntityMapping.RemoveMapping(gameObject);
 
             if (_ecsPackedEntity.Unpack(out var world, out var entity))
             {
                 world.DelEntity(entity);
             }
-
-            _initialized = false;
         }
     }
 }
