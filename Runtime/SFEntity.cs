@@ -17,6 +17,7 @@ namespace SFramework.ECS.Runtime
         public ref EcsPackedEntityWithWorld EcsPackedEntity => ref _ecsPackedEntity;
 
         [SFInject] private readonly ISFWorldsService _worldsService;
+		
         [SFWorld]
         private string _world;
 
