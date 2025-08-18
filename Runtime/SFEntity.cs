@@ -90,14 +90,7 @@ namespace SFramework.ECS.Runtime
             _isRootEntity = transform.parent == null || transform.parent.GetComponentInParent<SFEntity>(true) == null;
             _checkedRootEntity = true;
         }
-
-        [Button("Recreate Entity")]
-        public void RecreateEntity()
-        {
-            DestroyEntity();
-            CreateEntity();
-        }
-
+        
         public void CreateEntity()
         {
             if (_createdEntity) return;
