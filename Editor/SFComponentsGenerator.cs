@@ -26,7 +26,7 @@ namespace @@NAMESPACE@@
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
 #endif
-    [DisallowMultipleComponent, AddComponentMenu(""SFComponents/@@NAME@@""), HideMonoScript, RequireComponent(typeof(SFEntity))]
+    [DisallowMultipleComponent, AddComponentMenu(""SFComponents/@@NAME@@""), HideMonoScript, RequireComponent(typeof(SFEntity))] @@ATTRIBUTSEND@@
     public sealed class _@@COMPONENTNAME@@ : SFComponent<@@COMPONENTNAME@@> {}
 }
 ";
@@ -83,7 +83,8 @@ namespace @@NAMESPACE@@
                 var fileContent = template
                     .Replace("@@NAMESPACE@@", type.Namespace)
                     .Replace("@@COMPONENTNAME@@", type.Name)
-                    .Replace("@@NAME@@", AddSpacesToSentence(type.Name).Replace("Ref", "Reference"));
+                    .Replace("@@NAME@@", AddSpacesToSentence(type.Name).Replace("Ref", "Reference"))
+                    .Replace("@@ATTRIBUTSEND@@", GetRequiredComponents(type));
 
                 File.WriteAllText(simplePath, fileContent, Encoding.UTF8);
                 AssetDatabase.Refresh(ImportAssetOptions.Default);
@@ -108,6 +109,34 @@ namespace @@NAMESPACE@@
             }
 
             return newText.ToString();
+        }
+
+        static string GetRequiredComponents(Type type)
+        {
+            var attributeReq = type.GetCustomAttribute(typeof(SFRequireComponentAttribute)) as SFRequireComponentAttribute;
+            if (attributeReq == null || attributeReq.RequiredComponents == null ||  attributeReq.RequiredComponents.Length == 0)
+            {
+                return string.Empty;
+            }
+            
+            string result = "";
+            
+            foreach (var component in attributeReq.RequiredComponents)
+            {
+                // for struct
+                if (!component.IsClass && !component.IsInterface &&
+                    type.GetCustomAttribute(typeof(SFGenerateComponentAttribute)) != null)
+                {
+                    result += $"\n\t[RequireComponent(typeof({component.Namespace}._{component.Name}))]";
+                }
+                // for class
+                else if (typeof(MonoBehaviour).IsAssignableFrom(component))
+                {
+                    result += $"\n\t[RequireComponent(typeof({component.FullName}))]";
+                }
+            }
+            
+            return result;
         }
     }
 }
