@@ -1,18 +1,13 @@
-﻿using System;
-using SFramework.Core.Editor;
-using UnityEditor;
+﻿using UnityEditor;
 
 namespace SFramework.ECS.Editor
 {
-    [Serializable]
-    public sealed class SFECSTool : ISFEditorTool
+    public static class SFECSTool
     {
         [MenuItem("Edit/SFramework/Regenerate ECS Components")]
-        private static void GenerateAuthorings()
+        private static void RegenerateComponent()
         {
-          SFComponentsGenerator.Generate(true);
+            SFComponentsGenerator.Generate(true);
         }
-
-        public string Title => "SF ECS";
     }
 }
